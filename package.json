@@ -1,0 +1,22 @@
+{
+  "name": "session-buddy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wxt",
+    "build": "wxt build",
+    "postinstall": "wxt prepare"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/chrome": "^0.3.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wxt": "^0.21.4"
+  }
+}
