@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Session Buddy</title>
+    <meta name="manifest.type" content="browser_action" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <img src="/icon/48.png" alt="" class="logo" />
+      <div class="title">
+        <strong>Session Buddy</strong>
+        <span id="current" class="status"></span>
+      </div>
+    </header>
+    <main id="sessions"></main>
+    <form id="create">
+      <div class="create-row">
+        <input id="new-name" placeholder="Neue Session, z. B. Admin" required autocomplete="off" />
+        <button type="submit" class="primary">Anlegen</button>
+      </div>
+      <div id="new-colors" class="swatches"></div>
+    </form>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
