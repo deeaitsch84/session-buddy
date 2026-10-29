@@ -25,7 +25,10 @@
     <details id="agent">
       <summary>Agent-Zugriff</summary>
       <p>Ein Agent öffnet eine URL mit diesem Anhang, um den Tab in eine Session zu legen:</p>
-      <input id="agent-hash" readonly spellcheck="false" />
+      <div class="create-row">
+        <input id="agent-hash" readonly spellcheck="false" />
+        <button type="button" id="agent-copy">Kopieren</button>
+      </div>
     </details>
     <script type="module" src="./main.ts"></script>
   </body>

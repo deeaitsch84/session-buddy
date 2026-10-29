@@ -199,7 +199,14 @@ function renderNewColors() {
 }
 renderNewColors();
 
-document.getElementById('agent-hash')!.addEventListener('focus', (e) => (e.target as HTMLInputElement).select());
+const agentHash = document.getElementById('agent-hash') as HTMLInputElement;
+agentHash.addEventListener('focus', () => agentHash.select());
+const agentCopy = document.getElementById('agent-copy')!;
+agentCopy.addEventListener('click', async () => {
+  await navigator.clipboard.writeText(agentHash.value);
+  agentCopy.textContent = 'Kopiert';
+  setTimeout(() => (agentCopy.textContent = 'Kopieren'), 1500);
+});
 
 document.getElementById('create')!.addEventListener('submit', async (e) => {
   e.preventDefault();

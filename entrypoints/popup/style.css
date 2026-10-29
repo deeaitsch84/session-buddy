@@ -87,6 +87,11 @@ button svg { width: 14px; height: 14px; flex: none; }
 #new-name:focus { outline: none; border-color: var(--accent); }
 
 #agent { padding: 0 14px 12px; color: var(--muted); font-size: 12px; }
-#agent summary { cursor: pointer; }
-#agent p { margin: 6px 0; }
-#agent input { width: 100%; box-sizing: border-box; font: 11px ui-monospace, monospace; }
+#agent summary { cursor: pointer; border-radius: 4px; }
+#agent summary:hover { color: var(--text); }
+#agent summary:focus { outline: none; }
+#agent summary:focus-visible { outline: 2px solid var(--accent); }
+#agent p { margin: 6px 0 8px; }
+#agent-hash { flex: 1; min-width: 0; font: 11px ui-monospace, monospace; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; text-overflow: ellipsis; }
+#agent-hash:focus { outline: none; border-color: var(--accent); }
+#agent-copy { font-size: 12px; }
