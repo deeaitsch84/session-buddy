@@ -85,3 +85,8 @@ button svg { width: 14px; height: 14px; flex: none; }
 .create-row { display: flex; gap: 6px; }
 #new-name { flex: 1; min-width: 0; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; }
 #new-name:focus { outline: none; border-color: var(--accent); }
+
+#agent { padding: 0 14px 12px; color: var(--muted); font-size: 12px; }
+#agent summary { cursor: pointer; }
+#agent p { margin: 6px 0; }
+#agent input { width: 100%; box-sizing: border-box; font: 11px ui-monospace, monospace; }

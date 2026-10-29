@@ -3,6 +3,7 @@ import { COLOR_HEX, GROUP_COLORS, type GroupColor, type Session } from '../../sr
 
 interface State {
   sessions: Session[];
+  agentToken: string;
   activeTabId: number | null;
   activeSessionId: string | null;
   tabs: { id: number; sessionId: string; title: string; url: string; favIconUrl: string; windowId: number }[];
@@ -79,6 +80,8 @@ async function render() {
   document.getElementById('current')!.textContent = active
     ? `Dieser Tab läuft in „${active.name}“`
     : 'Dieser Tab nutzt die normalen Browser-Cookies';
+
+  (document.getElementById('agent-hash') as HTMLInputElement).value = `#sb=<Session-Name>&k=${state.agentToken}`;
 
   const open = openId ?? state.activeSessionId ?? '';
   const root = document.getElementById('sessions')!;
@@ -195,6 +198,8 @@ function renderNewColors() {
   );
 }
 renderNewColors();
+
+document.getElementById('agent-hash')!.addEventListener('focus', (e) => (e.target as HTMLInputElement).select());
 
 document.getElementById('create')!.addEventListener('submit', async (e) => {
   e.preventDefault();

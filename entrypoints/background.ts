@@ -2,6 +2,7 @@ import { cookieHeaderFor, parseSetCookie, setCookie, type Jar, type StoredCookie
 import type { Message } from '../src/messages';
 import { pageHook } from '../src/pagehook';
 import {
+  agentSessionFromUrl,
   COLOR_HEX,
   fromChromeCookie,
   sessionForGroup,
@@ -16,6 +17,7 @@ export default defineBackground(() => {
   const tabSession = new Map<number, string>();
   let sessions: Session[] = [];
   let jars: Jars = {};
+  let agentToken = '';
 
   const sessionById = (id: string | undefined) => sessions.find((s) => s.id === id);
   const tabsOf = (sessionId: string) => [...tabSession].filter(([, s]) => s === sessionId).map(([t]) => t);
@@ -84,11 +86,16 @@ export default defineBackground(() => {
   async function applyGroup(tabId: number) {
     const s = sessionById(tabSession.get(tabId));
     try {
+      const tab = await chrome.tabs.get(tabId);
+      // Leave tabs in foreign groups alone, e.g. the tab group a browser agent works in.
+      if (tab.groupId !== -1) {
+        const g = await chrome.tabGroups.get(tab.groupId);
+        if (!sessionForGroup(sessions, g.title, g.color)) return;
+      }
       if (!s) {
-        await chrome.tabs.ungroup(tabId);
+        if (tab.groupId !== -1) await chrome.tabs.ungroup(tabId);
         return;
       }
-      const tab = await chrome.tabs.get(tabId);
       const groups = await chrome.tabGroups.query({ windowId: tab.windowId, title: s.name, color: s.color });
       const groupId = await chrome.tabs.group(
         groups[0] ? { tabIds: tabId, groupId: groups[0].id } : { tabIds: tabId },
@@ -148,9 +155,11 @@ export default defineBackground(() => {
   }
 
   const loaded = (async () => {
-    const d = await chrome.storage.local.get(['sessions', 'jars', 'tabSession']);
+    const d = await chrome.storage.local.get(['sessions', 'jars', 'tabSession', 'agentToken']);
     sessions = (d.sessions as Session[] | undefined) ?? [];
     jars = (d.jars as Jars | undefined) ?? {};
+    agentToken = (d.agentToken as string | undefined) ?? crypto.randomUUID();
+    if (!d.agentToken) await chrome.storage.local.set({ agentToken });
     // storage.session is wiped on browser restart / extension reload, as are tab ids and session rules.
     const alive = await chrome.storage.session.get('alive');
     if (!alive.alive) {
@@ -168,6 +177,7 @@ export default defineBackground(() => {
     const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
     return {
       sessions,
+      agentToken,
       activeTabId: active?.id ?? null,
       activeSessionId: active?.id !== undefined ? (tabSession.get(active.id) ?? null) : null,
       tabs: tabs
@@ -197,8 +207,11 @@ export default defineBackground(() => {
         const s = sessionById(msg.id);
         const name = msg.name.trim();
         if (!s || !name) return;
+        // Rename the session's groups in place; afterwards they would no longer match it and count as foreign.
+        const groups = await chrome.tabGroups.query({ title: s.name, color: s.color });
         s.name = name;
         s.color = msg.color;
+        await Promise.all(groups.map((g) => chrome.tabGroups.update(g.id, { title: name, color: msg.color })));
         await persist();
         await Promise.all(tabsOf(s.id).map(refreshTab));
         rebuildMenus();
@@ -270,6 +283,18 @@ export default defineBackground(() => {
       })
       .catch((e) => console.warn('[session-buddy] page hook failed', e));
   });
+
+  // Agent trigger (e.g. claude-in-chrome): opening `<url>#sb=<session name>&k=<agent token>` puts the tab into that session.
+  const onAgentUrl = async (details: { tabId: number; frameId: number; url: string }) => {
+    if (details.frameId !== 0) return;
+    await loaded;
+    const hit = agentSessionFromUrl(details.url, sessions, agentToken);
+    if (!hit) return;
+    await assign(details.tabId, hit.session.id, false);
+    await chrome.tabs.update(details.tabId, { url: hit.url });
+  };
+  chrome.webNavigation.onBeforeNavigate.addListener(onAgentUrl);
+  chrome.webNavigation.onReferenceFragmentUpdated.addListener(onAgentUrl);
 
   chrome.runtime.onMessage.addListener((msg: Message, sender, sendResponse) => {
     handle(msg, sender).then(sendResponse, (e) => {

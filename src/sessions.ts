@@ -60,3 +60,21 @@ export function fromChromeCookie(c: ChromeCookieLike): StoredCookie {
     expires: c.session || c.expirationDate === undefined ? undefined : c.expirationDate * 1000,
   };
 }
+
+/**
+ * Agent trigger: a URL whose fragment is `sb=<session name>&k=<agent token>` puts its tab into that session.
+ * Names match case-insensitively.
+ * Returns the session and the URL without the fragment.
+ */
+// shortcut: the whole fragment is dropped, so hash-routed SPAs land on their start route; keep other params if that bites.
+export function agentSessionFromUrl(url: string, sessions: Session[], token: string): { session: Session; url: string } | null {
+  if (!token || !/^https?:/.test(url)) return null;
+  const u = new URL(url);
+  const params = new URLSearchParams(u.hash.slice(1));
+  if (params.get('k') !== token) return null;
+  const name = params.get('sb')?.trim().toLowerCase();
+  const session = sessions.find((s) => s.name.trim().toLowerCase() === name);
+  if (!session) return null;
+  u.hash = '';
+  return { session, url: u.href };
+}

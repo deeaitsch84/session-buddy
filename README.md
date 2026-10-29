@@ -19,6 +19,12 @@ Danach in `chrome://extensions` den Entwicklermodus aktivieren, „Entpackte Erw
 - **Leeren** löscht alle Cookies einer Session, **Löschen** entfernt die Session.
 - Tabs ohne Session verhalten sich wie gewohnt.
 
+## Agenten (z. B. claude-in-chrome)
+
+Ein Browser-Agent legt einen Tab in eine Session, indem er eine URL mit dem Anhang `#sb=<Session-Name>&k=<Token>` öffnet, z. B. `https://app.example.com/#sb=super%20admin&k=…`. Session Buddy entfernt den Anhang und lädt den Tab mit den Cookies der Session neu. Der Name wird ohne Groß-/Kleinschreibung verglichen; unbekannte Namen oder ein falscher Token werden ignoriert.
+
+Den Token zeigt das Popup unter „Agent-Zugriff“. Er verhindert, dass beliebige Webseiten per Link Tabs in eine Session schieben. Tabs in fremden Tab-Gruppen (etwa der Gruppe des Agenten) bleiben in ihrer Gruppe und bekommen nur Badge und Titel-Präfix.
+
 ## Funktionsweise
 
 - Pro Session gibt es pro Host einen eigenen Cookie-Jar (`chrome.storage.local`).
@@ -33,6 +39,8 @@ Danach in `chrome://extensions` den Entwicklermodus aktivieren, „Entpackte Erw
 - **Ein Jar pro Host**: Domain-Cookies (`Domain=.example.com`) werden nicht zwischen Subdomains geteilt. SSO-Flows über mehrere Hosts (`auth.x.com` → `app.x.com`) funktionieren daher nicht.
 - **Race beim Laden**: Der Hook wird beim Navigations-Commit injiziert. Sehr früh laufende Seiten-Skripte können vor ihm `document.cookie` oder `localStorage` lesen.
 - `localStorage`-Zugriffe über `Storage.prototype.getItem.call(localStorage, …)` umgehen den Proxy. Andere Tabs ohne Session sehen die Prefix-Schlüssel der Sessions in `localStorage`.
+- Cookies aus einer Redirect-Antwort (z. B. Login mit 302) fehlen im direkt folgenden Request; erst ab dem nächsten Request sind sie gesetzt.
+- Agent-Tabs liegen nicht in einer Session-Gruppe und verlieren ihre Session daher nach einem Browser-Neustart. Beim ersten Aufruf mit `#sb=` geht der allererste Request noch mit den normalen Browser-Cookies raus.
 - Der Titel-Präfix kann das Seitentitel-Verhalten von Single-Page-Apps beeinflussen.
 - Breite Rechte (`<all_urls>`, `cookies`, `webRequest` u. a.) machen die Extension nur für den privaten Gebrauch geeignet, nicht für den Chrome Web Store.
 
